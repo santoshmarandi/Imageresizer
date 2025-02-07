@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            width: 90%;
+            max-width: 500px;
+        }
+        .creator {
+            font-size: 12px;
+            color: gray;
+            margin-bottom: -10px;
+        }
+        h2 {
+            margin-top: 5px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        input, button {
+            margin-top: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <p class="creator">Created by Santosh Marandi</p>
+        <h2>Image Resizer</h2>
+        <input type="file" id="imageInput" accept="image/*"><br>
+        <label>Quality (%):</label>
+        <input type="number" id="qualityInput" min="10" max="100" value="80"><br>
+        <button onclick="resizeImage()">Resize</button>
+        
+        <h3>Original Image:</h3>
+        <img id="originalImage" src="#" alt="Original Image" style="display:none;">
+        <p id="originalSize"></p>
+
+        <h3>Resized Image:</h3>
+        <img id="resizedImage" src="#" alt="Resized Image" style="display:none;">
+        <p id="imageSize"></p>
+        <a id="downloadLink" style="display:none;">Download Resized Image</a>
+    </div>
+
+    <script>
+        function formatSize(sizeKB) {
+            return sizeKB >= 1024 ? (sizeKB / 1024).toFixed(2) + " MB" : sizeKB.toFixed(2) + " KB";
+        }
+
+        function resizeImage() {
+            let fileInput = document.getElementById("imageInput").files[0];
+            let quality = document.getElementById("qualityInput").value;
+            let originalImg = document.getElementById("originalImage");
+            let resizedImg = document.getElementById("resizedImage");
+            let originalSizeText = document.getElementById("originalSize");
+            let imageSizeText = document.getElementById("imageSize");
+            let downloadLink = document.getElementById("downloadLink");
+
+            if (!fileInput) {
+                alert("Please select an image first!");
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.readAsDataURL(fileInput);
+            reader.onload = function (event) {
+                let img = new Image();
+                img.src = event.target.result;
+                originalImg.src = img.src;
+                originalImg.style.display = "block";
+
+                let fileSizeKB = fileInput.size / 1024;
+                originalSizeText.innerHTML = `Original Image Size: ${formatSize(fileSizeKB)}`;
+
+                img.onload = function () {
+                    let canvas = document.createElement("canvas");
+                    let ctx = canvas.getContext("2d");
+
+                    let width = img.width;
+                    let height = img.height;
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    let resizedDataUrl = canvas.toDataURL("image/jpeg", quality / 100);
+                    resizedImg.src = resizedDataUrl;
+                    resizedImg.style.display = "block";
+
+                    let byteString = atob(resizedDataUrl.split(',')[1]);
+                    let fileSize = byteString.length / 1024; 
+                    imageSizeText.innerHTML = `Resized Image Size: ${formatSize(fileSize)}`;
+
+                    let originalFileName = fileInput.name;
+                    let fileExtension = originalFileName.split('.').pop();
+                    let baseName = originalFileName.replace("." + fileExtension, "");
+                    let newFileName = baseName + "-resized." + fileExtension;
+
+                    downloadLink.href = resizedDataUrl;
+                    downloadLink.download = newFileName;
+                    downloadLink.innerHTML = `Download ${newFileName}`;
+                    downloadLink.style.display = "block";
+                };
+            };
+        }
+    </script>
+
+</body>
+</html>
